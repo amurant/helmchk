@@ -6,7 +6,7 @@
 Install the latest version of helmchk with:
 
 ```console
-$ go install github.com/amurant/helmchk
+$ go install github.com/amurant/helmchk@latest
 ```
 
 Run helmchk on a chart directory:
