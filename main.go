@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"sort"
 	"strings"
 
 	"github.com/amurant/helmchk/pkg"
@@ -118,38 +117,24 @@ func compareValues(
 		exceptionStrings = strings.Split(string(exceptionsPathsRaw), "\n")
 	}
 
-	sort.Strings(valuePaths)
-	sort.Strings(templatePaths)
-	sort.Strings(exceptionStrings)
+	missingValues, missingTemplates := pkg.DiffPaths(valuePaths, templatePaths)
 
 	succeeded := true
-	prefix := ""
-	var i, j int
-	for i < len(valuePaths) && j < len(templatePaths) {
-		if valuePaths[i] == templatePaths[j] {
-			prefix = valuePaths[i]
-			i++
-			j++
-		} else if valuePaths[i] < templatePaths[j] {
-			if !strings.HasPrefix(valuePaths[i], prefix) {
-				exceptionString := fmt.Sprintf("value missing from templates: %s", valuePaths[i])
+	for _, missingValue := range missingValues {
+		exceptionString := fmt.Sprintf("value missing from values.yaml: %s", missingValue)
 
-				if !slices.Contains(exceptionStrings, exceptionString) {
-					fmt.Println(exceptionString)
-					succeeded = false
-				}
-			}
-			i++
-		} else {
-			if !strings.HasPrefix(templatePaths[j], prefix) {
-				exceptionString := fmt.Sprintf("value missing from values.yaml: %s", templatePaths[j])
+		if !slices.Contains(exceptionStrings, exceptionString) {
+			fmt.Println(exceptionString)
+			succeeded = false
+		}
+	}
 
-				if !slices.Contains(exceptionStrings, exceptionString) {
-					fmt.Println(exceptionString)
-					succeeded = false
-				}
-			}
-			j++
+	for _, missingTemplate := range missingTemplates {
+		exceptionString := fmt.Sprintf("value missing from templates: %s", missingTemplate)
+
+		if !slices.Contains(exceptionStrings, exceptionString) {
+			fmt.Println(exceptionString)
+			succeeded = false
 		}
 	}
 
